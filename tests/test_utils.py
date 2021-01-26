@@ -4,7 +4,7 @@ from pyepc.exceptions import EncodingError
 from pyepc.utils import (
     encode_integer, encode_hex, encode_string,
     decode_string,
-    calculate_check_digit)
+    calculate_check_digit, get_gcp_length)
 
 
 def test_encode_integer():
@@ -39,4 +39,8 @@ def test_encode_string():
 
 
 def test_check_digits():
-    assert calculate_check_digit('629104150021') == 3
+    assert calculate_check_digit('629104150021') == '3'
+
+
+def test_get_gcp_length():
+    assert get_gcp_length('80614141123458') == 7

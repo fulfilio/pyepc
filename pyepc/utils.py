@@ -4,6 +4,8 @@ the first part is an 8 bit header, followed by tag data. The
 overall length, structure and function is determined by the
 header.
 """
+import requests
+
 from .exceptions import EncodingError
 
 
@@ -143,4 +145,44 @@ def calculate_check_digit(number):
     )
 
     # Subtract the sum from nearest equal or higher multiple of ten
-    return 10 - (step_2 % 10)
+    return str(10 - (step_2 % 10))
+
+
+# A data store to retreive and store the company prefixes and
+# corresponding lengths. This is required to determine the length
+# of the company prefix and it is variable.
+GCP_LENGTHS = {}
+
+
+def get_gcp_length(gs1_identification_key):
+    """
+    Return the length of the GS1 Company Prefix (GCP)
+    by using the lookup table.
+
+    This is an implementation of the procedure outlines in
+    section 5.6.3 of the GS1 RFID/Barcode Interoperability Guideline
+    """
+    # If the table has not been loaded yet, load it
+    if not GCP_LENGTHS:
+        response = requests.get(
+            "https://www.gs1.org/sites/default/files/docs/gcp_length/gcpprefixformatlist.json"      # noqa
+        ).json()
+        for entry in response['GCPPrefixFormatList']['entry']:
+            GCP_LENGTHS[entry['prefix']] = entry['gcpLength']
+
+    # Step 1: Start with the first six digits of the GS1 identification
+    # key (skipping the Indicator Digit of a GTIN, the Extension Digit
+    # of an SSCC or the zero padding digit of a GRAI).
+    # Call this the “candidate prefix”.
+    candidate_prefix = gs1_identification_key[1:]
+
+    for candidate_length in range(11, 2, -1):
+        # Take the first part (starting with first 6 digits)
+        # and lookup if an entry exists. If there is one, return the
+        # value.
+        length = GCP_LENGTHS.get(candidate_prefix[:candidate_length])
+        if length is not None:
+            return length
+
+        # If not increase the digit and then check until all
+        # all the way down to 3 digits

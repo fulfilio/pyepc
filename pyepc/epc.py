@@ -19,6 +19,13 @@ class EPC(object):
         return len(self.company_prefix)
 
     @property
+    def gs1_element_string(self):
+        return self.get_gs1_element_string()
+
+    def get_gs1_element_string(self):
+        raise NotImplementedError()
+
+    @property
     def pure_identity_uri(self):
         """
         A representation of EPC for use in information systems.
@@ -38,7 +45,7 @@ class EPC(object):
         ])
 
     def __repr__(self):
-        return self.pure_identity_uri
+        return "<{}>".format(self.pure_identity_uri)
 
     def get_tag_uri(self, binary_scheme=None, filter_value=None):
         """
@@ -184,6 +191,82 @@ class SGTIN(EPC):
     is used to assign a unique identity to an instance
     of a trade item, such as a specific instance of a
     product or SKU.
+
+    Encoding
+    --------
+
+    # Always import from the root of the package
+    >>> from pyepc import SGTIN
+
+    # Build an sgtin object from company prefix, item ref and serial number
+    >>> company_prefix = '0614141'
+    >>> indicator = '8'
+    >>> item_ref = '12345'
+    >>> serial = '12345'
+    >>> sgtin = SGTIN(company_prefix, indicator, item_ref, serial)
+
+    # Get pure identity URI
+    >>> sgtin.pure_identity_uri
+    'urn:epc:id:sgtin:0614141.812345.12345'
+
+    # Get GS1 element string
+    >>> sgtin.gs1_element_string
+    '(01)80614141123458(21)12345'
+
+    # Get the tag URI
+    >>> sgtin.get_tag_uri()
+    'urn:epc:tag:sgtin-96:1.0614141.812345.12345'
+
+    # The sgtin-96 scheme was automatically selected as the most
+    # efficient binary encoding scheme for a numeric serial
+    # number.
+
+    # To explicitly use another encoding scheme like 'sgtin-198',
+    # specify the encoding scheme
+    >>> sgtin.get_tag_uri(SGTIN.BinarySchemes.SGTIN_198)
+    'urn:epc:tag:sgtin-198:1.0614141.812345.12345'
+
+    # You can also change the filter value. In this case
+    # 1 (for POS item) was used as the default
+    >>> sgtin.get_tag_uri(
+    ...    SGTIN.BinarySchemes.SGTIN_198,
+    ...    SGTIN.FilterValues.UNIT_LOAD,
+    ... )
+    'urn:epc:tag:sgtin-198:6.0614141.812345.12345'
+    # The filter value is now 6
+
+    # If you want to encode the EPC into the EPC bank of an RFID
+    # tag, you will need the hex encoded value of the tag uri.
+    >>> sgtin.encode()
+    '3034257BF7194E4000003039'
+
+    # Similar to the `get_tag_uri` methods, you can enforce which
+    # scheme should be used and the filter value
+    >>> sgtin.encode(
+    ...     SGTIN.BinarySchemes.SGTIN_198,
+    ...     SGTIN.FilterValues.UNIT_LOAD,
+    ... )
+    '36D4257BF7194E58B266D1A800000000000000000000000000'
+
+    Decoding
+    --------
+    >>> SGTIN.decode('36D4257BF7194E58B266D1A800000000000000000000000000')
+    '<urn:epc:id:sgtin:0614141.812345.12345>'
+
+    EPC from GTIN
+    -------------
+    If all what you have is a GTIN, then you can build an EPC from it
+
+    >>> SGTIN.from_sgtin('80614141123458', '6789AB')
+    '<urn:epc:id:sgtin:0614141.812345.6789AB>'
+
+    However, this has to lookup the company prefix length from the GS1
+    prefix list and could be expensive the first time. So if you already
+    know your company prefix length, then pass that along
+
+    >>> company_prefix_len = len('0614141')
+    >>> SGTIN.from_sgtin('80614141123458', '6789AB', company_prefix_len)
+    '<urn:epc:id:sgtin:0614141.812345.6789AB>'
     """
     __scheme__ = 'sgtin'
 
@@ -496,3 +579,69 @@ class SGTIN(EPC):
             item_ref,
             utils.decode_string(serial)
         )
+
+    @classmethod
+    def from_sgtin(cls, gtin, serial_number, company_prefix_len=None):
+        """
+        Create an EPC by translating GTIN
+
+        When translating from a GTIN to the EPC, it is necessary to
+        know the length of the GS1 Company Prefix that was used to
+        construct the GTIN.
+
+        This is because the length of the GS1 Company Prefix is
+        variable and these digits must be separated from the
+        remainder of the key to construct the EPC URI.
+
+        You can either provide a company_prefix_len or the library will
+        calculate one using a lookup table. This could be slow the first
+        time around as the massive lookup table is downloaded and loaded
+        into a map.
+
+        :param gtin: 14 digit GTIN including indicator and check digit
+        :param serial_number: Serial number for the GTIN
+        :param company_prefix_len: Length of the company prefix
+        """
+        assert len(gtin) == 14, "GTIN must be 14 digits"
+
+        if company_prefix_len is None:
+            # Lookup the company prefix len if not provided.
+            # This is expensive the first time
+            company_prefix_len = utils.get_gcp_length(gtin)
+
+        return cls(
+            # First digit of GTIN
+            indicator=gtin[0],
+            # Second to the length of company prefix
+            company_prefix=gtin[1:][:company_prefix_len],
+            # After company prefix, excluding check digit
+            item_ref=gtin[1 + company_prefix_len:-1],
+            serial_number=serial_number,
+        )
+
+    @property
+    def gtin(self):
+        """
+        Return the GTIN in "plain" syntax
+        """
+        gtin_wo_check_digit = "".join([
+            self.indicator,
+            self.company_prefix,
+            self.item_ref.zfill(12 - len(self.company_prefix))
+        ])
+        return gtin_wo_check_digit + utils.calculate_check_digit(
+            gtin_wo_check_digit
+        )
+
+    def get_gs1_element_string(self):
+        """
+        Return a GS1 element string for SGTIN
+        """
+        return "".join([
+            # GS1 Application identifier for GTIN is 01
+            "(01)",
+            self.gtin,
+            # GS1 Application identifier for serial number 21
+            "(21)",
+            self.serial_number
+        ])
