@@ -46,7 +46,7 @@ setup(
     include_package_data=True,
     keywords='pyepc epc',
     name='pyepc',
-    packages=find_packages(include=['pyepc', 'pymws.*']),
+    packages=find_packages(include=['pyepc', 'pyepc.*']),
     setup_requires=setup_requirements,
     test_suite='tests',
     tests_require=test_requirements,
