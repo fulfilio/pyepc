@@ -14,81 +14,92 @@ pip install pyepc
 ### Encoding EPC from company prefix and item reference
 
 ```python
-    # Encoding
-    # --------
+# Encoding
+# --------
 
-    # Always import from the root of the package
-    >>> from pyepc import SGTIN
+# Always import from the root of the package
+>>> from pyepc import SGTIN
 
-    # Build an sgtin object from company prefix, item ref and serial number
-    >>> company_prefix = '0614141'
-    >>> indicator = '8'
-    >>> item_ref = '12345'
-    >>> serial = '12345'
-    >>> sgtin = SGTIN(company_prefix, indicator, item_ref, serial)
+# You can build an epc object in many ways. If you are starting
+# from an application that manages items and GS1 company prefixes
+# then building an SGTIN from the components is the likely path
+>>> company_prefix = '0614141'
+>>> indicator = '8'
+>>> item_ref = '12345'
+>>> serial = '12345'
+>>> sgtin = SGTIN(company_prefix, indicator, item_ref, serial)
 
-    # Get pure identity URI
-    >>> sgtin.pure_identity_uri
-    'urn:epc:id:sgtin:0614141.812345.12345'
+# Get pure identity URI
+>>> sgtin.pure_identity_uri
+'urn:epc:id:sgtin:0614141.812345.12345'
 
-    # Get GS1 element string
-    >>> sgtin.gs1_element_string
-    '(01)80614141123458(21)12345'
+# Get GS1 element string
+>>> sgtin.gs1_element_string
+'(01)80614141123458(21)12345'
 
-    # Get the tag URI
-    >>> sgtin.get_tag_uri()
-    'urn:epc:tag:sgtin-96:1.0614141.812345.12345'
+# Get a GTIN from the EPC
+>>> sgtin.gtin
+'80614141123458'
 
-    # The sgtin-96 scheme was automatically selected as the most
-    # efficient binary encoding scheme for a numeric serial
-    # number.
+# You can also build a SGTIN object from the GTIN
+# if a GTIN is what you have as a starting point
+>>> sgtin = SGTIN.from_sgtin('80614141123458', serial_number='123456')
+'<urn:epc:id:sgtin:0614141.812345.123456>'
 
-    # To explicitly use another encoding scheme like 'sgtin-198',
-    # specify the encoding scheme
-    >>> sgtin.get_tag_uri(SGTIN.BinarySchemes.SGTIN_198)
-    'urn:epc:tag:sgtin-198:1.0614141.812345.12345'
+# Get the tag URI
+>>> sgtin.get_tag_uri()
+'urn:epc:tag:sgtin-96:1.0614141.812345.12345'
 
-    # You can also change the filter value. In this case
-    # 1 (for POS item) was used as the default
-    >>> sgtin.get_tag_uri(
-    ...    SGTIN.BinarySchemes.SGTIN_198,
-    ...    SGTIN.FilterValues.UNIT_LOAD,
-    ... )
-    'urn:epc:tag:sgtin-198:6.0614141.812345.12345'
-    # The filter value is now 6
+# The sgtin-96 scheme was automatically selected as the most
+# efficient binary encoding scheme for a numeric serial
+# number.
 
-    # If you want to encode the EPC into the EPC bank of an RFID
-    # tag, you will need the hex encoded value of the tag uri.
-    >>> sgtin.encode()
-    '3034257BF7194E4000003039'
+# To explicitly use another encoding scheme like 'sgtin-198',
+# specify the encoding scheme
+>>> sgtin.get_tag_uri(SGTIN.BinarySchemes.SGTIN_198)
+'urn:epc:tag:sgtin-198:1.0614141.812345.12345'
 
-    # Similar to the `get_tag_uri` methods, you can enforce which
-    # scheme should be used and the filter value
-    >>> sgtin.encode(
-    ...     SGTIN.BinarySchemes.SGTIN_198,
-    ...     SGTIN.FilterValues.UNIT_LOAD,
-    ... )
-    '36D4257BF7194E58B266D1A800000000000000000000000000'
+# You can also change the filter value. In this case
+# 1 (for POS item) was used as the default
+>>> sgtin.get_tag_uri(
+...    SGTIN.BinarySchemes.SGTIN_198,
+...    SGTIN.FilterValues.UNIT_LOAD,
+... )
+'urn:epc:tag:sgtin-198:6.0614141.812345.12345'
+# The filter value is now 6
 
-    # Decoding
-    # --------
-    >>> SGTIN.decode('36D4257BF7194E58B266D1A800000000000000000000000000')
-    '<urn:epc:id:sgtin:0614141.812345.12345>'
+# If you want to encode the EPC into the EPC bank of an RFID
+# tag, you will need the hex encoded value of the tag uri.
+>>> sgtin.encode()
+'3034257BF7194E4000003039'
 
-    # EPC from GTIN
-    # -------------
-    # If all what you have is a GTIN, then you can build an EPC from it
+# Similar to the `get_tag_uri` methods, you can enforce which
+# scheme should be used and the filter value
+>>> sgtin.encode(
+...     SGTIN.BinarySchemes.SGTIN_198,
+...     SGTIN.FilterValues.UNIT_LOAD,
+... )
+'36D4257BF7194E58B266D1A800000000000000000000000000'
 
-    >>> SGTIN.from_sgtin('80614141123458', '6789AB')
-    '<urn:epc:id:sgtin:0614141.812345.6789AB>'
+# Decoding
+# --------
+>>> SGTIN.decode('36D4257BF7194E58B266D1A800000000000000000000000000')
+'<urn:epc:id:sgtin:0614141.812345.12345>'
 
-    # However, this has to lookup the company prefix length from the GS1
-    # prefix list and could be expensive the first time. So if you already
-    # know your company prefix length, then pass that along
+# EPC from GTIN
+# -------------
+# If all what you have is a GTIN, then you can build an EPC from it
 
-    >>> company_prefix_len = len('0614141')
-    >>> SGTIN.from_sgtin('80614141123458', '6789AB', company_prefix_len)
-    '<urn:epc:id:sgtin:0614141.812345.6789AB>'
+>>> SGTIN.from_sgtin('80614141123458', '6789AB')
+'<urn:epc:id:sgtin:0614141.812345.6789AB>'
+
+# However, this has to lookup the company prefix length from the GS1
+# prefix list and could be expensive the first time. So if you already
+# know your company prefix length, then pass that along
+
+>>> company_prefix_len = len('0614141')
+>>> SGTIN.from_sgtin('80614141123458', '6789AB', company_prefix_len)
+'<urn:epc:id:sgtin:0614141.812345.6789AB>'
 ```
 
 ### Decoding EPC from Hex value in an EPC
