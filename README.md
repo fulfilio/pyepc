@@ -11,7 +11,7 @@ pip install pyepc
 
 ## Usage
 
-### Encoding EPC from company prefix and item reference
+### SGTIN
 
 ```python
 # Encoding
@@ -100,6 +100,60 @@ pip install pyepc
 >>> company_prefix_len = len('0614141')
 >>> SGTIN.from_sgtin('80614141123458', '6789AB', company_prefix_len)
 '<urn:epc:id:sgtin:0614141.812345.6789AB>'
+```
+
+### SSCC
+
+```python
+# Encoding
+# --------
+
+# Always import from the root of the package
+>>> from pyepc import SSCC
+
+# Build an SSCC object from the company prefix, extension digit
+# and a serial reference for the logistics unit
+>>> company_prefix = '0614141'
+>>> extension_digit = '1'
+>>> serial_ref = '234567890'
+>>> sscc = SSCC(company_prefix, extension_digit, serial_ref)
+
+# Get pure identity URI
+>>> sscc.pure_identity_uri
+'urn:epc:id:sscc:0614141.1234567890'
+
+# Get GS1 element string
+>>> sscc.gs1_element_string
+'(00)106141412345678908'
+
+# Get the tag URI
+>>> sscc.get_tag_uri()
+'urn:epc:tag:sscc-96:0.0614141.1234567890'
+
+# If you want to encode the EPC into the EPC bank of an RFID
+# tag, you will need the hex encoded value of the tag uri.
+>>> sscc.encode()
+'3114257BF4499602D2000000'
+
+# Decoding
+# --------
+
+>>> sscc.decode('3114257BF4499602D2000000')
+'<urn:epc:id:sscc:0614141.1234567890>'
+
+# EPC from SSCC Code
+# ------------------
+
+>>> SSCC.from_sscc('106141412345678908')
+'<urn:epc:id:sscc:0614141.1234567890>'
+
+However, this has to lookup the company prefix length from the GS1
+prefix list and could be expensive the first time. So if you already
+know your company prefix length, then pass that along
+
+>>> company_prefix_len = len('0614141')
+>>> SSCC.from_sscc('106141412345678908', company_prefix_len)
+'<urn:epc:id:sscc:0614141.1234567890>'
 ```
 
 ### Decoding EPC from Hex value in an EPC
