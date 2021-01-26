@@ -1,9 +1,13 @@
+# -*- coding: utf-8 -*-
 """
 The EPC binary encoding stored on tags is a string of bits and
 the first part is an 8 bit header, followed by tag data. The
 overall length, structure and function is determined by the
 header.
 """
+from __future__ import unicode_literals
+from builtins import str
+
 import requests
 
 from .exceptions import EncodingError
@@ -52,7 +56,7 @@ def encode_string(value, bits):
     """
     rv = ''
     assert len(value) <= bits / 7, "String {} is too long".format(value)
-    for char in value.encode('ascii'):
+    for char in str(value).encode('ascii'):
         rv += encode_integer(char, 7)
 
     # Pad with zero bits as necessary to total bits
@@ -125,7 +129,7 @@ def hex_2_bin(hex_val, bits):
     Given the hex string, convert it into binary string
     """
     return "".join([
-        "{:04b}".format(int(hex_val, 16)) for hex_val in hex_val
+        "{:04b}".format(int(hex_char, 16)) for hex_char in hex_val
         ])[:bits].encode()
 
 

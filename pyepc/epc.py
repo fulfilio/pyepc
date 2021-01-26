@@ -1,3 +1,7 @@
+# -*- coding: utf-8 -*-
+from __future__ import unicode_literals
+
+from builtins import str
 from collections import namedtuple
 from enum import Enum
 import struct
@@ -301,7 +305,7 @@ class SGTIN(EPC):
             item_ref
         ).zfill(13 - len(self.company_prefix))
 
-        self.serial_number = serial_number
+        self.serial_number = str(serial_number)
 
         # Store the defaults for creating tag URIs.
         self.default_binary_scheme = default_binary_scheme
