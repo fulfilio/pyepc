@@ -6,13 +6,13 @@ from pyepc.exceptions import EncodingError
 
 
 def test_sgtin_no_serial():
-    sgtin = SGTIN("0614141", "812345")
+    sgtin = SGTIN("0614141", "8", "12345")
     assert sgtin.pure_identity_uri == 'urn:epc:id:sgtin:0614141.812345.0'
     assert sgtin.get_tag_uri() == 'urn:epc:tag:sgtin-96:1.0614141.812345.0'
 
 
 def test_sgtin_96_invalid_serial():
-    sgtin = SGTIN("0614141", "812345", "001")
+    sgtin = SGTIN("0614141", "8", "12345", "001")
 
     # Pure identity has no issue because the encoding determined the
     # validty of this
@@ -26,7 +26,7 @@ def test_sgtin_96_invalid_serial():
 
 
 def test_sgtin_96():
-    sgtin = SGTIN("0614141", "812345", "6789")
+    sgtin = SGTIN("0614141", "8", "12345", "6789")
     assert sgtin.pure_identity_uri == 'urn:epc:id:sgtin:0614141.812345.6789'
     assert sgtin.get_tag_uri() == 'urn:epc:tag:sgtin-96:1.0614141.812345.6789'
     assert sgtin.encode() == '3034257BF7194E4000001A85'
@@ -35,7 +35,7 @@ def test_sgtin_96():
 
 
 def test_sgtin_198():
-    sgtin = SGTIN("0614141", "812345", "6789")
+    sgtin = SGTIN("0614141", "8", "12345", "6789")
     assert sgtin.pure_identity_uri == 'urn:epc:id:sgtin:0614141.812345.6789'
     assert sgtin.get_tag_uri(binary_scheme=SGTIN.BinarySchemes.SGTIN_198) == \
         'urn:epc:tag:sgtin-198:1.0614141.812345.6789'
@@ -46,7 +46,7 @@ def test_sgtin_198():
 
 
 def test_sgtin_198_alpha_num_serial():
-    sgtin = SGTIN("0614141", "812345", "6789AB")
+    sgtin = SGTIN("0614141", "8", "12345", "6789AB")
     assert sgtin.pure_identity_uri == 'urn:epc:id:sgtin:0614141.812345.6789AB'
     assert sgtin.get_tag_uri(binary_scheme=SGTIN.BinarySchemes.SGTIN_198) == \
         'urn:epc:tag:sgtin-198:1.0614141.812345.6789AB'

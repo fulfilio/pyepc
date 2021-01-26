@@ -18,9 +18,10 @@ from pyepc import SGTIN
 
 # Build an sgtin object from company prefix, item ref and serial number
 company_prefix = '0614141'
-item_ref = '812345'
+indicator = '8'
+item_ref = '12345'
 serial = '12345'
-sgtin = SGTIN(company_prefix, item_ref, serial)
+sgtin = SGTIN(company_prefix, indicator, item_ref, serial)
 
 # Get pure identity URI
 # urn:epc:id:sgtin:0614141.812345.12345
@@ -87,7 +88,7 @@ sgtin.company_prefix
 # '0614141'
 
 sgtin.item_ref
-# '812345'
+# '12345'
 
 sgtin.serial_number
 # '12345'

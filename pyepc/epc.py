@@ -201,17 +201,22 @@ class SGTIN(EPC):
         SGTIN_96 = 'sgtin-96'
         SGTIN_198 = 'sgtin-198'
 
-    def __init__(self, company_prefix, item_ref, serial_number="0",
+    def __init__(self, company_prefix, indicator, item_ref, serial_number="0",
                  default_binary_scheme=BinarySchemes.SGTIN_96,
                  default_filter_value=FilterValues.POS_ITEM):
 
         self.company_prefix = str(company_prefix)
         self.validate_company_prefix()
 
-        # Length of company prefix + item reference
+        self.item_ref = item_ref
+        self.indicator = indicator
+        # Length of company prefix + indicator + item reference
         # must be 13. So if the item_ref length is
         # smaller, pad with zeros
-        self.item_ref = item_ref.zfill(13 - len(self.company_prefix))
+        self.item_ref_and_indicator = "{}{}".format(
+            indicator,
+            item_ref
+        ).zfill(13 - len(self.company_prefix))
 
         self.serial_number = serial_number
 
@@ -222,7 +227,7 @@ class SGTIN(EPC):
     def get_uri_body_parts(self):
         return [
             self.company_prefix,
-            self.item_ref,
+            self.item_ref_and_indicator,
             self.serial_number
         ]
 
@@ -304,7 +309,7 @@ class SGTIN(EPC):
             ptr.p,
             self.company_prefix,
             ptr.m,
-            self.item_ref,
+            self.item_ref_and_indicator,
             ptr.n,
             47
         )
@@ -313,6 +318,19 @@ class SGTIN(EPC):
     def _decode_gtin(cls, gtin_binary):
         """
         Decode the GTIN part of the epc binary
+
+        ┌──────────────────────────────────────────────────┐
+        │                       GTIN                       │
+        │                        47                        │
+        ├─────────┬──────────────┬─────────────────────────┤
+        │PARTITION│COMPANY PREFIX│        ITEM REF         │
+        │    3    │    20-40     │          24-4           │
+        └─────────┼──────────────┼──────────┬──────────────┤
+                  │COMPANY PREFIX│INDICATOR │   ITEM REF   │
+                  │    20-40     │    1     │              │
+                  └──────────────┴──────────┴──────────────┘
+
+        :return: A tuple of company prefix, indicator and item ref
         """
         assert len(gtin_binary) == 47
 
@@ -323,13 +341,18 @@ class SGTIN(EPC):
         else:
             raise DecodingError("Length of Company Prefix is invalid")
 
-        return utils.decode_partition_table(
+        rv = utils.decode_partition_table(
             gtin_binary,
             ptr.m,
             ptr.l,
             ptr.n,
             # Total of 13 chars
             13 - ptr.l
+        )
+        return (
+            rv[0],          # Company prefix
+            rv[1][0],       # Indicator digit
+            rv[1][1:]       # Item ref
         )
 
     def encode_sgtin_96(self, filter_value):
@@ -438,9 +461,10 @@ class SGTIN(EPC):
         header, filter_value, gtin, serial = sgtin_96_struct.unpack(
             epc_binary
         )
-        company_prefix, item_ref = cls._decode_gtin(gtin)
+        company_prefix, indicator, item_ref = cls._decode_gtin(gtin)
         return cls(
             company_prefix,
+            indicator,
             item_ref,
             utils.decode_integer(serial)
         )
@@ -465,9 +489,10 @@ class SGTIN(EPC):
         header, filter_value, gtin, serial = sgtin_198_struct.unpack(
             epc_binary
         )
-        company_prefix, item_ref = cls._decode_gtin(gtin)
+        company_prefix, indicator, item_ref = cls._decode_gtin(gtin)
         return cls(
             company_prefix,
+            indicator,
             item_ref,
             utils.decode_string(serial)
         )
