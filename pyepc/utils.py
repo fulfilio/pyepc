@@ -147,6 +147,8 @@ def calculate_check_digit(number):
     ) + sum(
         [int(n) for n in number[::-1][1::2]]
     )
+    if step_2 % 10 == 0:
+        return "0"
 
     # Subtract the sum from nearest equal or higher multiple of ten
     return str(10 - (step_2 % 10))
