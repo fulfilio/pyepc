@@ -1,6 +1,4 @@
 # -*- coding: utf-8 -*-
-from __future__ import unicode_literals
-
 from builtins import str
 from collections import namedtuple
 from enum import Enum
@@ -42,11 +40,7 @@ class EPC(object):
         uri_body = ".".join(self.get_uri_body_parts())
 
         # urn:epc:id:sgtin:X.Y.Z
-        return ":".join([
-            "urn:epc:id",
-            self.__scheme__,
-            uri_body
-        ])
+        return ":".join(["urn:epc:id", self.__scheme__, uri_body])
 
     def __repr__(self):
         return "<{}>".format(self.pure_identity_uri)
@@ -128,7 +122,7 @@ class EPC(object):
         if filter_value is None:
             filter_value = self.default_filter_value
 
-        method_name = 'encode_{}'.format(binary_scheme.value.replace('-', '_'))
+        method_name = "encode_{}".format(binary_scheme.value.replace("-", "_"))
 
         return getattr(self, method_name)(filter_value)
 
@@ -145,9 +139,7 @@ class EPC(object):
         For example, if the scheme is sgtin-96, the serial
         number must be numeric only without leading zeros.
         """
-        validation_method = 'validate_{}'.format(
-            binary_scheme.value.replace('-', '_')
-        )
+        validation_method = "validate_{}".format(binary_scheme.value.replace("-", "_"))
         if hasattr(self, validation_method):
             return getattr(self, validation_method)()
 
@@ -172,9 +164,9 @@ def decode(epc_hex):
     The returned class is based on the type of EPC.
     """
     header_class_map = {
-        '30': SGTIN,
-        '36': SGTIN,
-        '31': SSCC,
+        "30": SGTIN,
+        "36": SGTIN,
+        "31": SSCC,
     }
     # Step 1: Extract the most significant 8 bits (or the)
     # first two characters of the epc_hex
@@ -182,9 +174,7 @@ def decode(epc_hex):
     try:
         header_class_map[header]
     except KeyError:
-        raise DecodingError(
-            "Cannot decode EPC with header {}".format(header)
-        )
+        raise DecodingError("Cannot decode EPC with header {}".format(header))
 
     # Step 2:
     return header_class_map[header].decode(epc_hex)
@@ -273,21 +263,22 @@ class SGTIN(EPC):
     >>> SGTIN.from_sgtin('80614141123458', '6789AB', company_prefix_len)
     '<urn:epc:id:sgtin:0614141.812345.6789AB>'
     """
-    __scheme__ = 'sgtin'
+
+    __scheme__ = "sgtin"
 
     class FilterValues(Enum):
-        ALL_OTHERS = '0'
-        POS_ITEM = '1'
-        CASE = '2'
-        RESERVED_3 = '3'
-        INNER_PACK = '4'
-        RESERVED_2 = '5'
-        UNIT_LOAD = '6'
-        COMPONENT = '7'
+        ALL_OTHERS = "0"
+        POS_ITEM = "1"
+        CASE = "2"
+        RESERVED_3 = "3"
+        INNER_PACK = "4"
+        RESERVED_2 = "5"
+        UNIT_LOAD = "6"
+        COMPONENT = "7"
 
     class BinarySchemes(Enum):
-        SGTIN_96 = 'sgtin-96'
-        SGTIN_198 = 'sgtin-198'
+        SGTIN_96 = "sgtin-96"
+        SGTIN_198 = "sgtin-198"
 
     # Implementation of SGTIN Partition table that identifies
     # partition value for different lengths of GS1 company
@@ -300,7 +291,7 @@ class SGTIN(EPC):
     # m - Company prefix - bits
     # l - Company prefix - digits
     # n - Item reference bits
-    PTR = namedtuple('PTR', 'p m l n')
+    PTR = namedtuple("PTR", "p m l n")
     partition_table = [
         PTR(p=0, m=40, l=12, n=4),
         PTR(p=1, m=37, l=11, n=7),
@@ -311,9 +302,15 @@ class SGTIN(EPC):
         PTR(p=6, m=20, l=6, n=24),
     ]
 
-    def __init__(self, company_prefix, indicator, item_ref, serial_number="0",
-                 default_binary_scheme=BinarySchemes.SGTIN_96,
-                 default_filter_value=FilterValues.POS_ITEM):
+    def __init__(
+        self,
+        company_prefix,
+        indicator,
+        item_ref,
+        serial_number="0",
+        default_binary_scheme=BinarySchemes.SGTIN_96,
+        default_filter_value=FilterValues.POS_ITEM,
+    ):
 
         self.company_prefix = str(company_prefix)
         self.validate_company_prefix()
@@ -323,10 +320,9 @@ class SGTIN(EPC):
         # Length of company prefix + indicator + item reference
         # must be 13. So if the item_ref length is
         # smaller, pad with zeros
-        self.item_ref_and_indicator = "{}{}".format(
-            indicator,
-            item_ref
-        ).zfill(13 - len(self.company_prefix))
+        self.item_ref_and_indicator = "{}{}".format(indicator, item_ref).zfill(
+            13 - len(self.company_prefix)
+        )
 
         self.serial_number = str(serial_number)
 
@@ -335,11 +331,7 @@ class SGTIN(EPC):
         self.default_filter_value = default_filter_value
 
     def get_uri_body_parts(self):
-        return [
-            self.company_prefix,
-            self.item_ref_and_indicator,
-            self.serial_number
-        ]
+        return [self.company_prefix, self.item_ref_and_indicator, self.serial_number]
 
     def guess_binary_scheme(self):
         """
@@ -360,8 +352,7 @@ class SGTIN(EPC):
         is less than 2^38 (that is, from 0 through
         274,877,906,943, inclusive)
         """
-        if len(self.serial_number) > 1 and \
-                self.serial_number.startswith('0'):
+        if len(self.serial_number) > 1 and self.serial_number.startswith("0"):
             raise EncodingError(
                 "`sgtin-96` encoding does not allow leading 0s for "
                 "serial numbers. Serial: '{}'".format(self.serial_number)
@@ -388,18 +379,13 @@ class SGTIN(EPC):
         sgtin-96 and sgtin-198
         """
         for ptr in self.partition_table:
-            if ptr.l == self.company_prefix_digits:     # noqa
+            if ptr.l == self.company_prefix_digits:  # noqa
                 break
         else:
             raise EncodingError("Length of Company Prefix is invalid")
 
         return utils.encode_partition_table(
-            ptr.p,
-            self.company_prefix,
-            ptr.m,
-            self.item_ref_and_indicator,
-            ptr.n,
-            47
+            ptr.p, self.company_prefix, ptr.m, self.item_ref_and_indicator, ptr.n, 47
         )
 
     @classmethod
@@ -424,7 +410,7 @@ class SGTIN(EPC):
 
         partition = int(utils.decode_integer(gtin_binary[:3]))
         for ptr in cls.partition_table:
-            if ptr.p == partition:     # noqa
+            if ptr.p == partition:  # noqa
                 break
         else:
             raise DecodingError("Length of Company Prefix is invalid")
@@ -435,12 +421,12 @@ class SGTIN(EPC):
             ptr.l,
             ptr.n,
             # Total of 13 chars
-            13 - ptr.l
+            13 - ptr.l,
         )
         return (
-            rv[0],          # Company prefix
-            rv[1][0],       # Indicator digit
-            rv[1][1:]       # Item ref
+            rv[0],  # Company prefix
+            rv[1][0],  # Indicator digit
+            rv[1][1:],  # Item ref
         )
 
     def encode_sgtin_96(self, filter_value):
@@ -519,16 +505,12 @@ class SGTIN(EPC):
         Decode and return a gtin object from the given EPC.
         """
         header = epc_hex[:2]
-        if header == '30':
+        if header == "30":
             return cls._decode_sgtin_96(utils.hex_2_bin(epc_hex, 96))
-        elif header == '36':
+        elif header == "36":
             return cls._decode_sgtin_198(utils.hex_2_bin(epc_hex, 198))
         else:
-            raise DecodingError(
-                "{} is not a valid header for SGTIN".format(
-                    header
-                )
-            )
+            raise DecodingError("{} is not a valid header for SGTIN".format(header))
 
     @classmethod
     def _decode_sgtin_96(cls, epc_binary):
@@ -537,25 +519,16 @@ class SGTIN(EPC):
         """
         if len(epc_binary) != 96:
             raise DecodingError(
-                "sgtin-96 EPCs should have 96 bits. Found {}".format(
-                    len(epc_binary)
-                )
+                "sgtin-96 EPCs should have 96 bits. Found {}".format(len(epc_binary))
             )
         # ┌──────────┬──────┬─────────────────────────────────┬──────┐
         # │EPC HEADER│FILTER│              GTIN               │SERIAL│
         # │    8     │  3   │               47                │ 38   │
         # └──────────┴──────┴─────────────────────────────────┴──────┘
-        sgtin_96_struct = struct.Struct('8s 3s 47s 38s')
-        header, filter_value, gtin, serial = sgtin_96_struct.unpack(
-            epc_binary
-        )
+        sgtin_96_struct = struct.Struct("8s 3s 47s 38s")
+        header, filter_value, gtin, serial = sgtin_96_struct.unpack(epc_binary)
         company_prefix, indicator, item_ref = cls._decode_gtin(gtin)
-        return cls(
-            company_prefix,
-            indicator,
-            item_ref,
-            utils.decode_integer(serial)
-        )
+        return cls(company_prefix, indicator, item_ref, utils.decode_integer(serial))
 
     @classmethod
     def _decode_sgtin_198(cls, epc_binary):
@@ -564,26 +537,17 @@ class SGTIN(EPC):
         """
         if len(epc_binary) != 198:
             raise DecodingError(
-                "sgtin-198 EPCs should have 198 bits. Found {}".format(
-                    len(epc_binary)
-                )
+                "sgtin-198 EPCs should have 198 bits. Found {}".format(len(epc_binary))
             )
         # ┌──────────┬──────┬─────────────────────────────────┬──────┐
         # │EPC HEADER│FILTER│              GTIN               │SERIAL│
         # │    8     │  3   │               47                │ 140  │
         # └──────────┴──────┴─────────────────────────────────┴──────┘
 
-        sgtin_198_struct = struct.Struct('8s 3s 47s 140s')
-        header, filter_value, gtin, serial = sgtin_198_struct.unpack(
-            epc_binary
-        )
+        sgtin_198_struct = struct.Struct("8s 3s 47s 140s")
+        header, filter_value, gtin, serial = sgtin_198_struct.unpack(epc_binary)
         company_prefix, indicator, item_ref = cls._decode_gtin(gtin)
-        return cls(
-            company_prefix,
-            indicator,
-            item_ref,
-            utils.decode_string(serial)
-        )
+        return cls(company_prefix, indicator, item_ref, utils.decode_string(serial))
 
     @classmethod
     def from_sgtin(cls, gtin, serial_number, company_prefix_len=None):
@@ -620,7 +584,7 @@ class SGTIN(EPC):
             # Second to the length of company prefix
             company_prefix=gtin[1:][:company_prefix_len],
             # After company prefix, excluding check digit
-            item_ref=gtin[1 + company_prefix_len:-1],
+            item_ref=gtin[(1 + company_prefix_len) : -1],
             serial_number=serial_number,
         )
 
@@ -629,27 +593,29 @@ class SGTIN(EPC):
         """
         Return the GTIN in "plain" syntax
         """
-        gtin_wo_check_digit = "".join([
-            self.indicator,
-            self.company_prefix,
-            self.item_ref.zfill(12 - len(self.company_prefix))
-        ])
-        return gtin_wo_check_digit + utils.calculate_check_digit(
-            gtin_wo_check_digit
+        gtin_wo_check_digit = "".join(
+            [
+                self.indicator,
+                self.company_prefix,
+                self.item_ref.zfill(12 - len(self.company_prefix)),
+            ]
         )
+        return gtin_wo_check_digit + utils.calculate_check_digit(gtin_wo_check_digit)
 
     def get_gs1_element_string(self):
         """
         Return a GS1 element string for SGTIN
         """
-        return "".join([
-            # GS1 Application identifier for GTIN is 01
-            "(01)",
-            self.gtin,
-            # GS1 Application identifier for serial number 21
-            "(21)",
-            self.serial_number
-        ])
+        return "".join(
+            [
+                # GS1 Application identifier for GTIN is 01
+                "(01)",
+                self.gtin,
+                # GS1 Application identifier for serial number 21
+                "(21)",
+                self.serial_number,
+            ]
+        )
 
 
 class SSCC(EPC):
@@ -707,20 +673,21 @@ class SSCC(EPC):
     >>> SSCC.from_sscc('106141412345678908', company_prefix_len)
     '<urn:epc:id:sscc:0614141.1234567890>'
     """
-    __scheme__ = 'sscc'
+
+    __scheme__ = "sscc"
 
     class FilterValues(Enum):
-        ALL_OTHERS = '0'
-        RESERVED_1 = '1'
-        CASE = '2'
-        RESERVED_3 = '3'
-        RESERVED_4 = '4'
-        RESERVED_5 = '5'
-        UNIT_LOAD = '6'
-        RESERVED_7 = '7'
+        ALL_OTHERS = "0"
+        RESERVED_1 = "1"
+        CASE = "2"
+        RESERVED_3 = "3"
+        RESERVED_4 = "4"
+        RESERVED_5 = "5"
+        UNIT_LOAD = "6"
+        RESERVED_7 = "7"
 
     class BinarySchemes(Enum):
-        SSCC_96 = 'sscc-96'
+        SSCC_96 = "sscc-96"
 
     # Implementation of SSCC Partition table that identifies
     # partition value for different lengths of GS1 company
@@ -733,7 +700,7 @@ class SSCC(EPC):
     # m - Company prefix - bits
     # l - Company prefix - digits
     # n - Extension digit and serial reference bits
-    PTR = namedtuple('PTR', 'p m l n')
+    PTR = namedtuple("PTR", "p m l n")
     partition_table = [
         PTR(p=0, m=40, l=12, n=18),
         PTR(p=1, m=37, l=11, n=21),
@@ -744,9 +711,14 @@ class SSCC(EPC):
         PTR(p=6, m=20, l=6, n=38),
     ]
 
-    def __init__(self, company_prefix, extension_digit, serial_ref,
-                 default_binary_scheme=BinarySchemes.SSCC_96,
-                 default_filter_value=FilterValues.ALL_OTHERS):
+    def __init__(
+        self,
+        company_prefix,
+        extension_digit,
+        serial_ref,
+        default_binary_scheme=BinarySchemes.SSCC_96,
+        default_filter_value=FilterValues.ALL_OTHERS,
+    ):
 
         self.company_prefix = str(company_prefix)
         self.validate_company_prefix()
@@ -756,10 +728,9 @@ class SSCC(EPC):
 
         # The number of characters in the company_prefix and serial
         # must total 17
-        self.extn_and_serial_ref = "{}{}".format(
-            extension_digit,
-            serial_ref
-        ).zfill(17 - len(self.company_prefix))
+        self.extn_and_serial_ref = "{}{}".format(extension_digit, serial_ref).zfill(
+            17 - len(self.company_prefix)
+        )
 
         # Store the defaults for creating tag URIs.
         self.default_binary_scheme = default_binary_scheme
@@ -792,18 +763,13 @@ class SSCC(EPC):
         Encode the SSCC part of the URI
         """
         for ptr in self.partition_table:
-            if ptr.l == self.company_prefix_digits:     # noqa
+            if ptr.l == self.company_prefix_digits:  # noqa
                 break
         else:
             raise EncodingError("Length of Company Prefix is invalid")
 
         return utils.encode_partition_table(
-            ptr.p,
-            self.company_prefix,
-            ptr.m,
-            self.extn_and_serial_ref,
-            ptr.n,
-            61
+            ptr.p, self.company_prefix, ptr.m, self.extn_and_serial_ref, ptr.n, 61
         )
 
     @classmethod
@@ -817,7 +783,7 @@ class SSCC(EPC):
 
         partition = int(utils.decode_integer(sscc_binary[:3]))
         for ptr in cls.partition_table:
-            if ptr.p == partition:     # noqa
+            if ptr.p == partition:  # noqa
                 break
         else:
             raise DecodingError("Length of Company Prefix is invalid")
@@ -828,7 +794,7 @@ class SSCC(EPC):
             ptr.l,
             ptr.n,
             # Total of 13 chars
-            17 - ptr.l
+            17 - ptr.l,
         )
 
     def encode_sscc_96(self, filter_value):
@@ -872,14 +838,10 @@ class SSCC(EPC):
         Decode and return a SSCC object from the given EPC.
         """
         header = epc_hex[:2]
-        if header == '31':
+        if header == "31":
             return cls._decode_sscc_96(utils.hex_2_bin(epc_hex, 96))
         else:
-            raise DecodingError(
-                "{} is not a valid header for SSCC".format(
-                    header
-                )
-            )
+            raise DecodingError("{} is not a valid header for SSCC".format(header))
 
     @classmethod
     def _decode_sscc_96(cls, epc_binary):
@@ -888,18 +850,14 @@ class SSCC(EPC):
         """
         if len(epc_binary) != 96:
             raise DecodingError(
-                "sscc-96 EPCs should have 96 bits. Found {}".format(
-                    len(epc_binary)
-                )
+                "sscc-96 EPCs should have 96 bits. Found {}".format(len(epc_binary))
             )
         # ┌──────────┬──────┬────────────────────────────────────┬────────┐
         # │EPC HEADER│FILTER│                SSCC                │Reserved│
         # │    8     │  3   │                 61                 │        │
         # └──────────┴──────┴────────────────────────────────────┴────────┘
-        sscc_96_struct = struct.Struct('8s 3s 61s 24s')
-        header, filter_value, sscc, reserved = sscc_96_struct.unpack(
-            epc_binary
-        )
+        sscc_96_struct = struct.Struct("8s 3s 61s 24s")
+        header, filter_value, sscc, reserved = sscc_96_struct.unpack(epc_binary)
         company_prefix, serial_ref = cls._decode_sscc(sscc)
         return cls(
             company_prefix,
@@ -939,7 +897,7 @@ class SSCC(EPC):
             # Second to the length of company prefix
             company_prefix=sscc[1:][:company_prefix_len],
             # After company prefix, excluding check digit
-            serial_ref=sscc[1 + company_prefix_len:-1],
+            serial_ref=sscc[1 + company_prefix_len : -1],
         )
 
     @property
@@ -947,21 +905,23 @@ class SSCC(EPC):
         """
         Return the SSCC in "plain" syntax
         """
-        sscc_wo_check_digit = "".join([
-            self.extension_digit,
-            self.company_prefix,
-            self.serial_ref.zfill(16 - len(self.company_prefix))
-        ])
-        return sscc_wo_check_digit + utils.calculate_check_digit(
-            sscc_wo_check_digit
+        sscc_wo_check_digit = "".join(
+            [
+                self.extension_digit,
+                self.company_prefix,
+                self.serial_ref.zfill(16 - len(self.company_prefix)),
+            ]
         )
+        return sscc_wo_check_digit + utils.calculate_check_digit(sscc_wo_check_digit)
 
     def get_gs1_element_string(self):
         """
         Return a GS1 element string for SSCC
         """
-        return "".join([
-            # GS1 Application identifier for SSCC is 00
-            "(00)",
-            self.sscc,
-        ])
+        return "".join(
+            [
+                # GS1 Application identifier for SSCC is 00
+                "(00)",
+                self.sscc,
+            ]
+        )
