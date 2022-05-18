@@ -68,3 +68,8 @@ def test_sgtin_198_alpha_num_serial():
 def test_epc_from_gtin():
     sgtin = SGTIN.from_sgtin('80614141123458', '6789AB')
     assert sgtin == SGTIN("0614141", "8", "12345", "6789AB")
+
+
+def test_gtin_from_epc():
+    decoded = SGTIN.decode('3036142C8C008F8000053244')
+    assert decoded.gtin == '08719139005740', "Decoded GTIN is wrong"
