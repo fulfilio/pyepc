@@ -17,7 +17,7 @@ body:
     validations:
       required: false
   - type: input
-    id: epc
+    id: tag_uri
     attributes:
       label: EPC Tag URI
       description: (urn:epc:tag:...)— as used in RFID middleware
