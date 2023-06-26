@@ -1,0 +1,32 @@
+name: Encoding/Decoding Error
+description: Ask for help related to an encoding or decoding error
+title: "[En/Decode Error]: "
+labels: ["encoding/decoding", "triage"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for providing the details of the encoding/decoding error
+        you are experiencing.
+  - type: input
+    id: epc
+    attributes:
+      label: EPC
+      description: RFID Tag EPC Memory Bank Contents
+      placeholder: 3074257bf7194e4000001a85
+    validations:
+      required: false
+  - type: input
+    id: epc
+    attributes:
+      label: EPC Tag URI
+      description: (urn:epc:tag:...)— as used in RFID middleware
+      placeholder: urn:epc:tag:sgtin-96:3.0614141.812345.6789
+    validations:
+      required: false
+  - type: textarea
+    id: logs
+    attributes:
+      label: Relevant log output / Stack trace
+      description: Please copy and paste any relevant log output. This will be automatically formatted into code, so no need for backticks.
+      render: shell
