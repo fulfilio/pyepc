@@ -23,11 +23,7 @@ def encode_integer(value, bits):
     fmt_str = "0{bits}b".format(bits=bits)
     rv = format(int(value), fmt_str)
     if len(rv) > bits:
-        raise EncodingError(
-            "Cannot fit integer '{}' into {} bits".format(
-                value, bits
-            )
-        )
+        raise EncodingError("Cannot fit integer '{}' into {} bits".format(value, bits))
     return rv
 
 
@@ -54,9 +50,9 @@ def encode_string(value, bits):
 
     Pad with zero bits as necessary to total bits
     """
-    rv = ''
+    rv = ""
     assert len(value) <= bits / 7, "String {} is too long".format(value)
-    for char in str(value).encode('ascii'):
+    for char in str(value).encode("ascii"):
         rv += encode_integer(char, 7)
 
     # Pad with zero bits as necessary to total bits
@@ -69,11 +65,13 @@ def decode_string(value):
     14.4.2 of the EPC Tag Data Standard
     """
     size = 7
-    return "".join([
-        chr(int(value[i:i + size], 2))
-        for i in range(0, len(value), size)
-        if int(value[i:i + size], 2) != 0
-    ])
+    return "".join(
+        [
+            chr(int(value[i : i + size], 2))
+            for i in range(0, len(value), size)
+            if int(value[i : i + size], 2) != 0
+        ]
+    )
 
 
 def encode_partition_table(partition, var1, var1_bits, var2, var2_bits, bits):
@@ -89,27 +87,26 @@ def encode_partition_table(partition, var1, var1_bits, var2, var2_bits, bits):
     a constant number of characters and the number of bits in the
     binary encoding likewise totals to a constant number of bits.
     """
-    return ''.join([
-        encode_integer(partition, 3),
-        encode_integer(var1, var1_bits),
-        encode_integer(var2, var2_bits),
-    ])
+    return "".join(
+        [
+            encode_integer(partition, 3),
+            encode_integer(var1, var1_bits),
+            encode_integer(var2, var2_bits),
+        ]
+    )
 
 
-def decode_partition_table(bin_value, var1_bits, var1_digits,
-                           var2_bits, var2_digits):
+def decode_partition_table(bin_value, var1_bits, var1_digits, var2_bits, var2_digits):
     """
     Implements partition table decoding defined in 14.4.3
 
     Returns a tuple of the two parts
     """
     return (
-        decode_integer(
-            bin_value[3:3 + var1_bits]
-        ).zfill(var1_digits),
-        decode_integer(
-            bin_value[3 + var1_bits:3 + var1_bits + var2_bits]
-        ).zfill(var2_digits),
+        decode_integer(bin_value[3 : 3 + var1_bits]).zfill(var1_digits),
+        decode_integer(bin_value[3 + var1_bits : 3 + var1_bits + var2_bits]).zfill(
+            var2_digits
+        ),
     )
 
 
@@ -118,19 +115,21 @@ def bin_2_hex(binary):
     Given the binary string, convert it into hex string
     """
     byte = 4
-    return "".join([
-        "{:X}".format(int(binary[i:i + byte], 2))
-        for i in range(0, len(binary), byte)
-    ])
+    return "".join(
+        [
+            "{:X}".format(int(binary[i : i + byte], 2))
+            for i in range(0, len(binary), byte)
+        ]
+    )
 
 
 def hex_2_bin(hex_val, bits):
     """
     Given the hex string, convert it into binary string
     """
-    return "".join([
-        "{:04b}".format(int(hex_char, 16)) for hex_char in hex_val
-        ])[:bits].encode()
+    return "".join(["{:04b}".format(int(hex_char, 16)) for hex_char in hex_val])[
+        :bits
+    ].encode()
 
 
 def calculate_check_digit(number):
@@ -142,9 +141,7 @@ def calculate_check_digit(number):
     """
     # Step 2: Multiply alternate position by 3 and 1
     # and get the sum
-    step_2 = sum(
-        [int(n) * 3 for n in number[::-1][::2]]
-    ) + sum(
+    step_2 = sum([int(n) * 3 for n in number[::-1][::2]]) + sum(
         [int(n) for n in number[::-1][1::2]]
     )
     if step_2 % 10 == 0:
@@ -171,10 +168,10 @@ def get_gcp_length(gs1_identification_key):
     # If the table has not been loaded yet, load it
     if not GCP_LENGTHS:
         response = requests.get(
-            "https://www.gs1.org/sites/default/files/docs/gcp_length/gcpprefixformatlist.json"      # noqa
+            "https://www.gs1.org/sites/default/files/docs/gcp_length/gcpprefixformatlist.json"  # noqa
         ).json()
-        for entry in response['GCPPrefixFormatList']['entry']:
-            GCP_LENGTHS[entry['prefix']] = entry['gcpLength']
+        for entry in response["GCPPrefixFormatList"]["entry"]:
+            GCP_LENGTHS[entry["prefix"]] = entry["gcpLength"]
 
     # Step 1: Start with the first six digits of the GS1 identification
     # key (skipping the Indicator Digit of a GTIN, the Extension Digit
