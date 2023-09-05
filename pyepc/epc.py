@@ -1,3 +1,20 @@
+from enum import Enum
+
+
+class HeaderHex(Enum):
+    """
+    Enum for the header hex values.
+
+    The header hex values are the first two characters of the EPC.
+
+    Read section 14.2 of the GS1 EPC Tag Data Standard for more information.
+    """
+
+    SGTIN_96 = "30"
+    SGTIN_198 = "36"
+    SSCC = "31"
+
+
 class EPC(object):
     """
     A class to represent an Electronic Product Code

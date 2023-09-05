@@ -1,3 +1,4 @@
+from .epc import HeaderHex
 from .exceptions import DecodingError
 from .sgtin import SGTIN
 from .sscc import SSCC
@@ -13,9 +14,9 @@ def decode(epc_hex):
     The returned class is based on the type of EPC.
     """
     header_class_map = {
-        "30": SGTIN,
-        "36": SGTIN,
-        "31": SSCC,
+        HeaderHex.SGTIN_96.value: SGTIN,
+        HeaderHex.SGTIN_198.value: SGTIN,
+        HeaderHex.SSCC.value: SSCC,
     }
     # Step 1: Extract the most significant 8 bits (or the)
     # first two characters of the epc_hex
