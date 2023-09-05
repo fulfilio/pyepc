@@ -4,7 +4,7 @@ from enum import Enum
 import struct
 
 from . import utils
-from .epc import EPC
+from .epc import EPC, HeaderHex
 from .exceptions import EncodingError, DecodingError
 
 
@@ -332,9 +332,9 @@ class SGTIN(EPC):
         Decode and return a gtin object from the given EPC.
         """
         header = epc_hex[:2]
-        if header == "30":
+        if header == HeaderHex.SGTIN_96.value:
             return cls._decode_sgtin_96(utils.hex_2_bin(epc_hex, 96))
-        elif header == "36":
+        elif header == HeaderHex.SGTIN_198.value:
             return cls._decode_sgtin_198(utils.hex_2_bin(epc_hex, 198))
         else:
             raise DecodingError("{} is not a valid header for SGTIN".format(header))
