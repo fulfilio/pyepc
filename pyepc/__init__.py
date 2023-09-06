@@ -4,7 +4,7 @@ from .sgtin import SGTIN
 from .sscc import SSCC
 
 
-__version__ = "0.0.3"
+__version__ = "0.4.0"
 
 
 def decode(epc_hex):
